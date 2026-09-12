@@ -7,6 +7,7 @@ from comum.mensagens import publicar_evento
 
 
 def gerar_promocao():
+    # O produto e o desconto mudam a cada publicacao.
     codigo = random.choice(list(PRODUTOS))
     produto = PRODUTOS[codigo]
     desconto = random.choice([10, 15, 20, 30])
@@ -17,6 +18,7 @@ def gerar_promocao():
         "preco_original": produto["preco"],
     }
     evento = "promocao.categoria." + produto["categoria"]
+    # As categorias sao usadas como routing keys no exchange de topicos.
     publicar_evento("promocoes", evento, dados, EXCHANGE_PROMOCOES)
     print("Promocao publicada:", evento, dados)
 

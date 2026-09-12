@@ -1,19 +1,20 @@
 import threading
 import uuid
-
 from catalogo import PRODUTOS, listar_produtos
 from comum.mensagens import consumir_eventos, publicar_evento
 
 
+# Os pedidos ficam em memoria enquanto o Principal esta executando.
 pedidos = {}
 trava_pedidos = threading.Lock()
 
 
-def tratar_evento(envelope):
+def atualizar_pedido(envelope):
     evento = envelope["Event"]
     dados = envelope["Data"]
     pedido_id = dados["pedido_id"]
 
+    # O status muda conforme os eventos recebidos dos outros servicos.
     with trava_pedidos:
         pedido = pedidos.get(pedido_id)
         if pedido is None:
@@ -45,9 +46,10 @@ def iniciar_consumidor():
         "pagamento.recusado",
         "pedido.enviado",
     ]
+    # A escuta fica em outra thread para o menu continuar aceitando comandos.
     consumidor = threading.Thread(
         target=consumir_eventos,
-        args=("fila.principal", bindings, tratar_evento),
+        args=("fila.principal", bindings, atualizar_pedido),
         daemon=True,
     )
     consumidor.start()
@@ -93,6 +95,7 @@ def fazer_pedido():
     with trava_pedidos:
         pedidos[pedido_id] = pedido
 
+    # O Estoque inicia o processamento a partir deste evento.
     publicar_evento("principal", "pedido.criado", pedido)
     print("Pedido criado:", pedido_id)
 

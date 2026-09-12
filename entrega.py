@@ -3,8 +3,9 @@ from datetime import datetime
 from comum.mensagens import consumir_eventos, publicar_evento
 
 
-def tratar_evento(envelope):
+def preparar_envio(envelope):
     pedido = envelope["Data"]
+    # A nota e criada apenas depois do pagamento aprovado.
     nota = "NF-" + pedido["pedido_id"].upper()
     dados = dict(pedido)
     dados["nota_fiscal"] = nota
@@ -17,7 +18,7 @@ def iniciar():
     consumir_eventos(
         "fila.entrega",
         ["pagamento.aprovado"],
-        tratar_evento,
+        preparar_envio,
     )
 
 

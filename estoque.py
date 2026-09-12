@@ -2,6 +2,7 @@ from catalogo import PRODUTOS
 from comum.mensagens import consumir_eventos, publicar_evento
 
 
+# Quantidades iniciais para a demonstracao.
 quantidades = {
     "1": 10,
     "2": 8,
@@ -11,7 +12,7 @@ quantidades = {
 reservas = {}
 
 
-def tratar_evento(envelope):
+def atualizar_estoque(envelope):
     evento = envelope["Event"]
     pedido = envelope["Data"]
     pedido_id = pedido["pedido_id"]
@@ -27,6 +28,7 @@ def tratar_evento(envelope):
             print("Estoque insuficiente para", pedido_id)
             return
 
+        # Primeiro baixa todos os itens; a reserva evita vender novamente.
         for item in pedido["produtos"]:
             produto_id = item["produto_id"]
             quantidades[produto_id] -= item["quantidade"]
@@ -35,6 +37,7 @@ def tratar_evento(envelope):
         print("Estoque reservado para", pedido_id)
 
     elif evento == "pedido.excluido":
+        # A reserva so existe quando o pedido passou pela verificacao.
         itens = reservas.pop(pedido_id, [])
         for item in itens:
             quantidades[item["produto_id"]] += item["quantidade"]
@@ -47,7 +50,7 @@ def iniciar():
     consumir_eventos(
         "fila.estoque",
         ["pedido.criado", "pedido.excluido"],
-        tratar_evento,
+        atualizar_estoque,
     )
 
 

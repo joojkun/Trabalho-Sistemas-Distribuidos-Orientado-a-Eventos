@@ -24,6 +24,7 @@ def garantir_chaves(servico):
     if arquivo_privada.exists() and arquivo_publica.exists():
         return
 
+    # A chave publica fica disponivel para os outros consumidores.
     chave_privada = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     chave_publica = chave_privada.public_key()
 
@@ -66,6 +67,7 @@ def criar_envelope(produtor, evento, dados):
         _arquivo_chave(produtor, "private_key.pem").read_bytes(),
         password=None,
     )
+    # O RSA assina o hash, e nao o JSON inteiro.
     assinatura = chave_privada.sign(
         hash_conteudo,
         padding.PKCS1v15(),
@@ -91,6 +93,7 @@ def validar_envelope(envelope):
     conteudo = _conteudo_assinado(evento, produtor, dados)
     hash_conteudo = _gerar_hash(conteudo)
 
+    # Se qualquer campo tiver mudado, a verificacao falha.
     try:
         chave_publica.verify(
             assinatura,

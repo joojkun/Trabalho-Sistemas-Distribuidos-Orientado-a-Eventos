@@ -5,6 +5,7 @@ from comum.seguranca import criar_envelope, validar_envelope
 
 
 def publicar(fila, produtor, evento, dados):
+    # A fila local imita a passagem de envelopes pelo RabbitMQ.
     fila.append(criar_envelope(produtor, evento, copy.deepcopy(dados)))
 
 
@@ -23,6 +24,7 @@ def executar(cenario):
 
     while fila:
         envelope = fila.pop(0)
+        # A simulacao tambem verifica as assinaturas dos eventos.
         if not validar_envelope(envelope):
             print("Evento invalido descartado")
             continue

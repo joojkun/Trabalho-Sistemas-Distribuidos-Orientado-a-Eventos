@@ -1,3 +1,4 @@
+# Catalogo usado pelo Principal e pelo servico de promocoes.
 PRODUTOS = {
     "1": {"nome": "Teclado", "preco": 120.0, "categoria": "A"},
     "2": {"nome": "Mouse", "preco": 80.0, "categoria": "A"},

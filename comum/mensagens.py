@@ -16,6 +16,7 @@ def abrir_conexao():
 
 
 def preparar_exchanges(canal):
+    # Os exchanges sao declarados por todos os processos para evitar ordem fixa.
     canal.exchange_declare(
         exchange=EXCHANGE_ECOMMERCE,
         exchange_type="direct",
@@ -34,6 +35,7 @@ def publicar_evento(produtor, evento, dados, exchange=EXCHANGE_ECOMMERCE):
     preparar_exchanges(canal)
 
     envelope = criar_envelope(produtor, evento, dados)
+    # Mensagens persistentes continuam na fila se o consumidor parar.
     canal.basic_publish(
         exchange=exchange,
         routing_key=evento,
@@ -53,13 +55,14 @@ def consumir_eventos(fila, bindings, funcao, exchange=EXCHANGE_ECOMMERCE):
     canal.queue_declare(queue=fila, durable=True)
 
     for binding in bindings:
+        # Cada fila recebe apenas os eventos dos seus bindings.
         canal.queue_bind(
             exchange=exchange,
             queue=fila,
             routing_key=binding,
         )
 
-    def receber(canal_receber, metodo, propriedades, corpo):
+    def ler_mensagem(canal_receber, metodo, propriedades, corpo):
         try:
             envelope = json.loads(corpo.decode())
             valido = validar_envelope(envelope)
@@ -79,9 +82,10 @@ def consumir_eventos(fila, bindings, funcao, exchange=EXCHANGE_ECOMMERCE):
             return
 
         funcao(envelope)
+        # Confirma somente depois que a funcao terminou.
         canal_receber.basic_ack(delivery_tag=metodo.delivery_tag)
 
     canal.basic_qos(prefetch_count=1)
-    canal.basic_consume(queue=fila, on_message_callback=receber)
+    canal.basic_consume(queue=fila, on_message_callback=ler_mensagem)
     print("Consumidor ativo:", fila)
     canal.start_consuming()
